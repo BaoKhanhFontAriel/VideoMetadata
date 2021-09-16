@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.videometadata.Fragment.MetadataFragment;
 import com.example.videometadata.MetaViewModel;
 import com.example.videometadata.R;
+import com.example.videoplayer.ICallback;
 import com.example.videoplayer.IVideoPlayerService;
 import com.example.videoplayer.VideoEntry;
 
@@ -98,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
                 .add(R.id.main_container, metadataFragment)
-                .addToBackStack("miniPlayerFragment")
                 .commit();
 
         metaViewModel = new ViewModelProvider(this).get(MetaViewModel.class);
@@ -125,16 +125,35 @@ public class MainActivity extends AppCompatActivity {
 
     IVideoPlayerService iVideoPlayerService;
 
+
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(TAG, "onServiceConnected: ");
             iVideoPlayerService = IVideoPlayerService.Stub.asInterface(service);
+
+            try {
+                iVideoPlayerService.registerCb(iCallback);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
+            try {
+                iVideoPlayerService.unRegisterCb(iCallback);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
             iVideoPlayerService = null;
+        }
+    };
+
+    ICallback iCallback = new ICallback.Stub() {
+        @Override
+        public VideoEntry getSelectedVideo() throws RemoteException {
+            return null;
         }
     };
 
@@ -147,6 +166,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return videoEntries;
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        int count = getSupportFragmentManager().getBackStackEntryCount();
+
+        if (count == 0) {
+            super.onBackPressed();
+            //additional code
+        } else {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+            getSupportFragmentManager().popBackStack();
+        }
     }
 
 

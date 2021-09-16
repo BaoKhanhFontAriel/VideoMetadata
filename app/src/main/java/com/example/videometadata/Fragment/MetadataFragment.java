@@ -173,6 +173,7 @@ public class MetadataFragment extends Fragment {
 
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.main_container, searchFragment)
+                    .addToBackStack(null)
                     .commit();
 
             return true;

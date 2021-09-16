@@ -53,16 +53,22 @@ public class SearchFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recycler_view);
     }
 
-    private androidx.appcompat.widget.SearchView searchView;
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         Log.d(TAG, "onCreateOptionsMenu: ");
         getActivity().getMenuInflater().inflate(R.menu.search_menu, menu);
 
+        showBackButton();
+        initSearchView(menu);
+    }
+
+    public void showBackButton() {
         ((MainActivity) getActivity()).getSupportActionBar().setHomeAsUpIndicator(R.drawable.back_button);// set drawable icon
         ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
 
+    private androidx.appcompat.widget.SearchView searchView;
+    public void initSearchView(Menu menu) {
         SearchManager searchManager = (SearchManager) getActivity().getSystemService(getActivity().SEARCH_SERVICE);
         MenuItem searchItem = menu.findItem(R.id.search_in_search_activity);
         searchView = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
@@ -73,9 +79,15 @@ public class SearchFragment extends Fragment {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
+
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
                 List<VideoEntry> videoEntries = new ArrayList<>();
                 try {
-                    videoEntries = ((MainActivity) getActivity()).getSearchedVideos(query);
+                    videoEntries = ((MainActivity) getActivity()).getSearchedVideos(newText);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -84,19 +96,11 @@ public class SearchFragment extends Fragment {
                 recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                 return true;
             }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return true;
-            }
         });
     }
 
-    BaseListAdapter.IEntryClicked callback = new BaseListAdapter.IEntryClicked() {
-        @Override
-        public void onItemClicked(int position) {
+    BaseListAdapter.IEntryClicked callback = position -> {
 
-        }
     };
 
     @Override
@@ -104,8 +108,7 @@ public class SearchFragment extends Fragment {
         Log.d(TAG, "onOptionsItemSelected: " + item.getItemId());
 
         // 16908332 is the id of back button
-        if (item.getItemId() == 16908332){
-            Log.d(TAG, "home: ");
+        if (item.getItemId() == 16908332) {
             ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
             MetadataFragment metadataFragment = new MetadataFragment();
             getParentFragmentManager().beginTransaction()
