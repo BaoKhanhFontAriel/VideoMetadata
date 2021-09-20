@@ -28,64 +28,47 @@ public class MainActivity extends AppCompatActivity {
     private final static String TAG = "MainActivity";
 
     private MetaViewModel metaViewModel;
-    private IntentFilter intentFilter;
-    private Intent intent;
-    private static final String INTENT = "INTENT";
-    private static final String AWAKE = "AWAKE";
-    private static final String NOT_AWAKE = "NOT_AWAKE";
-    private static final String PLAY_NEXT = "PLAY_NEXT";
-    private static final String PLAY_PREV = "PLAY_PREV";
-    private static final String PAUSE = "PAUSE";
-    private static final String PLAY = "PLAY";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setId();
-        filterIntent();
-        initIntent();
         bindService();
-
-        Log.d(TAG, "INTENT: " + intent.getStringExtra(INTENT));
     }
 
-    public void sendAwake() {
-        intent.putExtra(INTENT, AWAKE);
-        sendBroadcast(intent);
+    public void playPrev(){
+        try {
+            iVideoPlayerService.playPrev();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void sendPrev() {
-        intent.putExtra(INTENT, PLAY_PREV);
-        sendBroadcast(intent);
+    public void playNext() {
+        try {
+            iVideoPlayerService.playNext();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void sendNext() {
-        intent.putExtra(INTENT, PLAY_NEXT);
-        sendBroadcast(intent);
+    public void pause() {
+        try {
+            iVideoPlayerService.pause();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void sendPause() {
-        intent.putExtra(INTENT, PAUSE);
-        sendBroadcast(intent);
+    public void play() {
+        try {
+            iVideoPlayerService.play();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void sendPlay() {
-        intent.putExtra(INTENT, PLAY);
-        sendBroadcast(intent);
-    }
-
-    public void filterIntent() {
-        intentFilter = new IntentFilter("MyReceiver");
-        registerReceiver(broadcastReceiver, intentFilter);
-    }
-
-    public void initIntent() {
-        intent = new Intent("com.example.videometadata");
-        intent.setComponent(new ComponentName("com.example.videoplayer", "com.example.videoplayer.BroadcastReceiver.MyReceiver"));
-        intent.putExtra(INTENT, AWAKE);
-        sendBroadcast(intent);
-    }
 
     public void bindService() {
         Intent aidlIntent = new Intent("connect_to_aidl_service");
@@ -103,25 +86,6 @@ public class MainActivity extends AppCompatActivity {
 
         metaViewModel = new ViewModelProvider(this).get(MetaViewModel.class);
     }
-
-
-    private String currVideoName = "";
-
-    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (!intent.getStringExtra("video name").equals(currVideoName)) {
-                Log.d(TAG, "equals: ");
-                currVideoName = intent.getStringExtra("video name");
-                metaViewModel.getVideoName().setValue(intent.getStringExtra("video name"));
-                metaViewModel.getArtistName().setValue(intent.getStringExtra("artist name"));
-                metaViewModel.getUri().setValue(intent.getStringExtra("uri"));
-                metaViewModel.getDuration().setValue(intent.getIntExtra("duration", 0));
-            }
-            metaViewModel.getProgress().setValue(intent.getIntExtra("CURRENT_PROGRESS", 0));
-        }
-    };
-
 
     IVideoPlayerService iVideoPlayerService;
 
@@ -151,13 +115,42 @@ public class MainActivity extends AppCompatActivity {
     };
 
     ICallback iCallback = new ICallback.Stub() {
+
         @Override
-        public VideoEntry getSelectedVideo() throws RemoteException {
-            return null;
+        public void getVideoName(String videoname) throws RemoteException {
+            metaViewModel.getVideoName().postValue(videoname);
+        }
+
+        @Override
+        public void getArtistName(String artist) throws RemoteException {
+            metaViewModel.getArtistName().postValue(artist);
+        }
+
+        @Override
+        public void getUri(String uri) throws RemoteException {
+            metaViewModel.getUri().postValue(uri);
+        }
+
+        @Override
+        public void getDuration(int duration) throws RemoteException {
+            metaViewModel.getDuration().postValue(duration);
+        }
+
+        @Override
+        public void getProgress(int progress) throws RemoteException {
+            metaViewModel.getProgress().postValue(progress);
         }
     };
 
-    public List<VideoEntry> getSearchedVideos(String query) throws RemoteException {
+    public void playSelectedVideo(VideoEntry videoEntry){
+        try {
+            iVideoPlayerService.playSelectedVideo(videoEntry);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<VideoEntry> searchVideos(String query) throws RemoteException {
         List<VideoEntry> videoEntries = iVideoPlayerService.getVideos(query);
 
         Log.d(TAG, "onQueryTextSubmit: " + videoEntries.size());
@@ -186,22 +179,38 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        intent.putExtra(INTENT, NOT_AWAKE);
-        sendBroadcast(intent);
+        if (iVideoPlayerService != null){
+            try {
+                iVideoPlayerService.unRegisterCb(iCallback);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+        unbindService(serviceConnection);
     }
 
 
     @Override
     protected void onResume() {
         super.onResume();
-        intent.putExtra(INTENT, AWAKE);
-        sendBroadcast(intent);
+        bindService();
+        if (iVideoPlayerService != null){
+            try {
+                iVideoPlayerService.registerCb(iCallback);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(serviceConnection);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(serviceConnection);
-        unregisterReceiver(broadcastReceiver);
     }
 }

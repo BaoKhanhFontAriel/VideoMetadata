@@ -26,7 +26,6 @@ import com.example.videoplayer.VideoEntry;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SearchFragment extends Fragment {
@@ -67,6 +66,8 @@ public class SearchFragment extends Fragment {
         ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
+    private List<VideoEntry> videoEntries;
+
     private androidx.appcompat.widget.SearchView searchView;
     public void initSearchView(Menu menu) {
         SearchManager searchManager = (SearchManager) getActivity().getSystemService(getActivity().SEARCH_SERVICE);
@@ -85,9 +86,8 @@ public class SearchFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                List<VideoEntry> videoEntries = new ArrayList<>();
                 try {
-                    videoEntries = ((MainActivity) getActivity()).getSearchedVideos(newText);
+                    videoEntries = ((MainActivity) getActivity()).searchVideos(newText);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -100,7 +100,8 @@ public class SearchFragment extends Fragment {
     }
 
     BaseListAdapter.IEntryClicked callback = position -> {
-
+        ((MainActivity) getActivity()).playSelectedVideo(videoEntries.get(position));
+        pressBackButton();
     };
 
     @Override
@@ -109,12 +110,16 @@ public class SearchFragment extends Fragment {
 
         // 16908332 is the id of back button
         if (item.getItemId() == 16908332) {
-            ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-            MetadataFragment metadataFragment = new MetadataFragment();
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.main_container, metadataFragment)
-                    .commit();
+            pressBackButton();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void pressBackButton(){
+        ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        MetadataFragment metadataFragment = new MetadataFragment();
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.main_container, metadataFragment)
+                .commit();
     }
 }

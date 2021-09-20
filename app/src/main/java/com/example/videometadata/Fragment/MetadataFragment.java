@@ -75,7 +75,7 @@ public class MetadataFragment extends Fragment {
                 handler.removeCallbacks(scrollText);
                 video_name.setSelected(false);
                 video_name.setText(s);
-                ((MainActivity) getActivity()).sendAwake();
+//                ((MainActivity) getActivity()).sendAwake();
                 handler.postDelayed(scrollText, 3000);
             }
         });
@@ -121,14 +121,14 @@ public class MetadataFragment extends Fragment {
         prev_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).sendPrev();
+                ((MainActivity) getActivity()).playPrev();
             }
         });
 
         next_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).sendNext();
+                ((MainActivity) getActivity()).playNext();
             }
         });
 
@@ -137,8 +137,8 @@ public class MetadataFragment extends Fragment {
             public void onClick(View v) {
                 pause_button.setSelected(!pause_button.isSelected());
                 if (pause_button.isSelected()) {
-                    ((MainActivity) getActivity()).sendPause();
-                } else ((MainActivity) getActivity()).sendPlay();
+                    ((MainActivity) getActivity()).pause();
+                } else ((MainActivity) getActivity()).play();
             }
         });
     }

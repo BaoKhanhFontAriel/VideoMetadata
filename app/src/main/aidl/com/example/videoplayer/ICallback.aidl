@@ -9,5 +9,9 @@ interface ICallback {
      * Demonstrates some basic types that you can use as parameters
      * and return values in AIDL.
      */
-    VideoEntry getSelectedVideo();
+    void getVideoName(String videoname);
+    void getArtistName(String artist);
+    void getUri(String uri);
+    void getDuration(int duration);
+    void getProgress(int progress);
 }

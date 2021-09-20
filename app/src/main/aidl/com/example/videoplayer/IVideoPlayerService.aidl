@@ -11,7 +11,11 @@ interface IVideoPlayerService {
      * and return values in AIDL.
      */
     List<VideoEntry> getVideos(in String query);
-    void getSelectedVideo(in VideoEntry videoEntry);
+    void playSelectedVideo(in VideoEntry videoEntry);
+        void playNext();
+        void playPrev();
+        void pause();
+        void play();
     void registerCb(ICallback cb);
     void unRegisterCb(ICallback cb);
 }
